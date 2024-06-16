@@ -46,7 +46,7 @@ voronoiTab=voronoi_shp%>%
   setDT()
 
 ## Construct a variable defining the spatial units for which aggregate statistics are produced.
-## Note: These spatial units are specifically designed for the publication of the SciData dataset, but other applications can reuse the code considering a distinct level of aggregation that the user can define.
+## Note: These spatial units are specifically designed for the publication of the Senegal temporary migration dataset, but other applications can reuse the code considering a distinct level of aggregation that the user can define.
 
 # Reformat city_name to avoid ambiguous characters
 voronoiTab[,city_name:=iconv(city_name,from="UTF-8",to="ASCII//TRANSLIT")]
