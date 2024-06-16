@@ -6,8 +6,11 @@ IMPORTANT: SCRIPTS MUST BE EXECUTED IN THE ORDER IN WHICH THEY ARE NUMBERED.
 
 For instance, you should run "1-MigrationDetection_part0_SciData.py" first, then "2-MigrationDetection_part1_SciData.py" etc...
 
-All methodological details are provided in Blanchard & Rubrichi (2024).
+All methodological details are provided in Blanchard & Rubrichi (2024):
 
+Blanchard, P. and S. Rubrichi (2024): “A Highly Granular Temporary Migration Dataset Derived From Mobile Phone Data in Senegal”
+
+All PySpark scripts start by creating a Spark session with some values assigned to properties related to memory management (`spark.driver.memory`,`spark.executor.memory`,`spark.driver.maxResultSize`). Users will note that those values should be adjusted to their specific needs depending on the size of the dataset to process and the characteristics of their machine. Details on how to set up a Spark session can be found [here](https://spark.apache.org/docs/latest/configuration.html).
 
 # 1-MigrationDetection_part0_SciData.py
 Main input: raw mobile phone dataset such as Call Detail Records (`MPdataset`)
@@ -56,3 +59,31 @@ Main output: dataset where each row represents a user-(meso-segment) detected (`
 The script imports daily locations and applies a clustering procedure to detect users/devices' meso-segments with a maximum duration of at least some specified threshold (default is left to 20 days).
 
 # 4-ObservationGapDetection_SciData.py
+Main input: inferred daily locations for each individual user/device (`daily_loc` (DataFrame)), Home locations datasets (`residLoc_unique` (DataFrame),`residLoc_multiple` (DataFrame))
+
+Main output: dataset providing the observation gaps of all users (`ObsGap` (DataFrame))
+
+The script is similar to script 3 and can be thought of as measuring the "complement" of user-segments. Each row of the output represents a user observation gap with its start date and its end date, with observation gaps being simply defined as groups of consecutive days without calls. Observation gaps are used as the primary input in script 5 to determine users' observation status for any given time unit.
+
+# 5-MigrationStatistics_TimeDisaggregated_part1_SciData.py
+Main input: Observation gap dataset (`ObsGap` (DataFrame))
+
+Main output: Counts of users observed for departure, return and stock migration metrics by time unit and origin location
+
+The script imports the dataset of user-level observation gaps and implements a set of algorithmic rules to infer the number of users observed by time unit for each migration metric (departure, return, stock). All methodological details are provided in Blanchard & Rubrichi (2024). In particular, illustrative diagrams with extensive comments are provided in the Supplementary Matrial to support the understanding of the code.
+
+# 6-MigrationStatistics_TimeDisaggregated_part2_SciData.py
+Main input: dataset of detected meso-segments for each individual user (`UserSegment` (DataFrame))
+
+Main output: Migration flows (departures and returns) by origin-destination voronoi pair and time unit
+
+The script imports meso-segments and calculates the number of temporary migration departures and returns by origin-destination voronoi pair and time unit. The type of time units considered can be half-months and/or weeks (ISO 8601 definition), by setting `run_halfMonth` and `run_week` to `True` respectively. Note that the script does not support the calculation of migration flows by calendar month yet, although the option may be implemented in future versions of the code. There is also an option to calculate migration flows associated with migration events of some minimum duration via the parameter `T_meso_min`. For instance, setting `T_meso_min=60` will allow to calculate for each (origin\*destination\*time) the number of departures in migration that lasted at least 60 days. `T_meso_min` can be a list of multiple values, in which case results for each individual value are exported in a separate file.
+
+IMPORTANT: section 3 of the script calculates a number of useful variables in `UserSegment` DataFrame which are then used to calculate migration flows. The dataset is exported in a temporary folder (`result_dir+"temp/UserSegment"`) and re-used as input in script 7. The filtering parameters (`filter_dummy`,`filter_name`) specified in script 6 are thus automatically applied in script 7.
+
+# 7-MigrationStatistics_TimeDisaggregated_part3_SciData.py
+Main input: dataset of detected meso-segments for each individual user (`UserSegment` (DataFrame)) augmented with some useful variables and exported in a temporary folder in script 6
+
+Main output: Migration stock by origin-destination voronoi pair and time unit
+
+Similar to script 6, script 7 allows to calculate migration stock values by origin-destination voronoi pair and time unit.
