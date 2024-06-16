@@ -87,3 +87,6 @@ Main input: dataset of detected meso-segments for each individual user (`UserSeg
 Main output: Migration stock by origin-destination voronoi pair and time unit
 
 Similar to script 6, script 7 allows to calculate migration stock values by origin-destination voronoi pair and time unit.
+
+# 8-MigrationDatasetBuilder_SciData.R
+
